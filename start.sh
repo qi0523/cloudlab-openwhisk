@@ -297,6 +297,9 @@ if [ $1 != $PRIMARY_ARG -a $1 != $SECONDARY_ARG ] ; then
     exit -1
 fi
 
+# modify group
+sudo groupmod -n $USER_GROUP containernetwor1
+
 # Kubernetes does not support swap, so we must disable it
 disable_swap
 
