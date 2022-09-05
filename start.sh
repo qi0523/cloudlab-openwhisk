@@ -1,6 +1,9 @@
 #!/bin/bash
 
 set -x
+
+USER=Zhihao
+USER_GROUP=containernetwork
 BASE_IP="10.10.1."
 SECONDARY_PORT=3000
 INSTALL_DIR=/home/cloudlab-openwhisk
@@ -11,6 +14,8 @@ USAGE=$'Usage:\n\t./start.sh secondary <node_ip> <start_kubernetes>\n\t./start.s
 NUM_PRIMARY_ARGS=7
 PROFILE_GROUP="profileuser"
 
+
+## modify containerd
 configure_docker_storage() {
     printf "%s: %s\n" "$(date +"%T.%N")" "Configuring docker storage"
     sudo mkdir /mydata/docker
@@ -37,7 +42,7 @@ disable_swap() {
         echo "***Error: Failed to turn off swap, which is necessary for Kubernetes"
         exit -1
     fi
-    sudo sed -i.bak 's/UUID=.*swap/# &/' /etc/fstab
+    sudo sed -i 's/UUID=.*swap/# &/' /etc/fstab
 }
 
 setup_secondary() {
@@ -72,6 +77,14 @@ setup_secondary() {
 }
 
 setup_primary() {
+
+    # Download and install helm
+    pushd $INSTALL_DIR/install
+    curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+    chmod 744 get_helm.sh
+    sudo ./get_helm.sh
+    popd
+
     # initialize k8 primary node
     printf "%s: %s\n" "$(date +"%T.%N")" "Starting Kubernetes... (this can take several minutes)... "
     sudo kubeadm init --apiserver-advertise-address=$1 --pod-network-cidr=10.11.0.0/16 > $INSTALL_DIR/k8s_install.log 2>&1
@@ -83,16 +96,17 @@ setup_primary() {
         exit 1
     fi
 
-    # Set up kubectl for all users
-    for FILE in /users/*; do
-        CURRENT_USER=${FILE##*/}
-        sudo mkdir /users/$CURRENT_USER/.kube
-        sudo cp /etc/kubernetes/admin.conf /users/$CURRENT_USER/.kube/config
-        sudo chown -R $CURRENT_USER:$PROFILE_GROUP /users/$CURRENT_USER/.kube
-	printf "%s: %s\n" "$(date +"%T.%N")" "set /users/$CURRENT_USER/.kube to $CURRENT_USER:$PROFILE_GROUP!"
-	ls -lah /users/$CURRENT_USER/.kube
-    done
+    # Set up kubectl for Zhihao users TODO: completed
+    sudo mkdir /users/$USER/.kube
+    sudo cp /etc/kubernetes/admin.conf /users/$USER/.kube/config
+    sudo chown -R $USER:$USER_GROUP /users/$USER/.kube
+	printf "%s: %s\n" "$(date +"%T.%N")" "set /users/$USER/.kube to $USER:$USER_GROUP!"
+	ls -lah /users/$USER/.kube
     printf "%s: %s\n" "$(date +"%T.%N")" "Done!"
+
+    ### TODO: remove taint master, completed
+    kubectl taint nodes --all node-role.kubernetes.io/master-
+    kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 }
 
 apply_calico() {
@@ -113,12 +127,19 @@ apply_calico() {
 
     # wait for calico pods to be in ready state
     printf "%s: %s\n" "$(date +"%T.%N")" "Waiting for calico pods to have status of 'Running': "
-    NUM_PODS=$(kubectl get pods -n calico-system | wc -l)
+    sleep 10
+    NUM_PODS=$(kubectl get pods -n calico-system | grep calico | wc -l)
+    while [ "$NUM_PODS" -eq 0 ]
+    do
+        sleep 5
+        printf "."
+        NUM_PODS=$(kubectl get pods -n calico-system | grep calico | wc -l)
+    done
     NUM_RUNNING=$(kubectl get pods -n calico-system | grep " Running" | wc -l)
     NUM_RUNNING=$((NUM_PODS-NUM_RUNNING))
     while [ "$NUM_RUNNING" -ne 0 ]
     do
-        sleep 1
+        sleep 5
         printf "."
         NUM_RUNNING=$(kubectl get pods -n calico-system | grep " Running" | wc -l)
         NUM_RUNNING=$((NUM_PODS-NUM_RUNNING))
@@ -126,8 +147,10 @@ apply_calico() {
     printf "%s: %s\n" "$(date +"%T.%N")" "Calico running!"
 }
 
-add_cluster_nodes() {
-    REMOTE_CMD=$(tail -n 2 $INSTALL_DIR/k8s_install.log)
+add_cluster_nodes() { ## $1 == 1
+
+    # awk -v line=$(awk '{if($1=="kubeadm")print NR}' k8s.log) '{if(NR>=line && NR<line+2){print $0}}' k8s.log
+    REMOTE_CMD=$(awk -v line=$(awk '{if($1=="kubeadm")print NR}' $INSTALL_DIR/k8s_install.log) '{if(NR>=line && NR<line+2){print $0}}' $INSTALL_DIR/k8s_install.log)
     printf "%s: %s\n" "$(date +"%T.%N")" "Remote command is: $REMOTE_CMD"
 
     NUM_REGISTERED=$(kubectl get nodes | wc -l)
@@ -155,7 +178,7 @@ add_cluster_nodes() {
     NUM_READY=$(($1-NUM_READY))
     while [ "$NUM_READY" -ne 0 ]
     do
-        sleep 1
+        sleep 3
         printf "."
         NUM_READY=$(kubectl get nodes | grep " Ready" | wc -l)
         NUM_READY=$(($1-NUM_READY))
@@ -198,16 +221,16 @@ prepare_for_openwhisk() {
     printf "%s: %s\n" "$(date +"%T.%N")" "Created openwhisk namespace in Kubernetes."
 
     cp /local/repository/mycluster.yaml $INSTALL_DIR/openwhisk-deploy-kube/mycluster.yaml
-    sed -i.bak "s/REPLACE_ME_WITH_IP/$1/g" $INSTALL_DIR/openwhisk-deploy-kube/mycluster.yaml
-    sed -i.bak "s/REPLACE_ME_WITH_INVOKER_ENGINE/$4/g" $INSTALL_DIR/openwhisk-deploy-kube/mycluster.yaml
-    sed -i.bak "s/REPLACE_ME_WITH_INVOKER_COUNT/$3/g" $INSTALL_DIR/openwhisk-deploy-kube/mycluster.yaml
+    sed -i "s/REPLACE_ME_WITH_IP/$1/g" $INSTALL_DIR/openwhisk-deploy-kube/mycluster.yaml
+    sed -i "s/REPLACE_ME_WITH_INVOKER_ENGINE/$4/g" $INSTALL_DIR/openwhisk-deploy-kube/mycluster.yaml
+    sed -i "s/REPLACE_ME_WITH_INVOKER_COUNT/$3/g" $INSTALL_DIR/openwhisk-deploy-kube/mycluster.yaml
     sudo chown $USER:$PROFILE_GROUP $INSTALL_DIR/openwhisk-deploy-kube/mycluster.yaml
     sudo chmod -R g+rw $INSTALL_DIR/openwhisk-deploy-kube/mycluster.yaml
     printf "%s: %s\n" "$(date +"%T.%N")" "Updated $INSTALL_DIR/openwhisk-deploy-kube/mycluster.yaml"
     
     if [ $4 == "docker" ] ; then
         if test -d "/mydata"; then
-	    sed -i.bak "s/\/var\/lib\/docker\/containers/\/mydata\/docker\/containers/g" $INSTALL_DIR/openwhisk-deploy-kube/helm/openwhisk/templates/_invoker-helpers.tpl
+	    sed -i "s/\/var\/lib\/docker\/containers/\/mydata\/docker\/containers/g" $INSTALL_DIR/openwhisk-deploy-kube/helm/openwhisk/templates/_invoker-helpers.tpl
             printf "%s: %s\n" "$(date +"%T.%N")" "Updated dockerrootdir to /mydata/docker/containers in $INSTALL_DIR/openwhisk-deploy-kube/helm/openwhisk/templates/_invoker-helpers.tpl"
         fi
     fi
@@ -277,25 +300,18 @@ fi
 # Kubernetes does not support swap, so we must disable it
 disable_swap
 
+# nerdctl rootless
+/usr/local/bin/containerd-rootless-setuptool.sh check
+/usr/local/bin/containerd-rootless-setuptool.sh install
+
 # Use mountpoint (if it exists) to set up additional docker image storage
 if test -d "/mydata"; then
     configure_docker_storage
 fi
 
-# All all users to the docker group
-
-# Fix permissions of install dir, add group for all users to set permission of shared files correctly
-sudo groupadd $PROFILE_GROUP
-for FILE in /users/*; do
-    CURRENT_USER=${FILE##*/}
-    sudo gpasswd -a $CURRENT_USER $PROFILE_GROUP
-    sudo gpasswd -a $CURRENT_USER docker
-done
-sudo chown -R $USER:$PROFILE_GROUP $INSTALL_DIR
-sudo chmod -R g+rw $INSTALL_DIR
 
 # Use second argument (node IP) to replace filler in kubeadm configuration
-sudo sed -i.bak "s/REPLACE_ME_WITH_IP/$2/g" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+sudo sed -i "s/REPLACE_ME_WITH_IP/$2/g" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
 
 # At this point, a secondary node is fully configured until it is time for the node to join the cluster.
 if [ $1 == $SECONDARY_ARG ] ; then
