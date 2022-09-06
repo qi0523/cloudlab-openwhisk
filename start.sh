@@ -3,7 +3,7 @@
 set -x
 
 USER=Zhihao
-USER_GROUP=containernetwork
+USER_GROUP=k8s
 BASE_IP="10.10.1."
 SECONDARY_PORT=3000
 INSTALL_DIR=/home/cloudlab-openwhisk
@@ -297,8 +297,6 @@ if [ $1 != $PRIMARY_ARG -a $1 != $SECONDARY_ARG ] ; then
     exit -1
 fi
 
-# modify group
-sudo groupmod -n $USER_GROUP containernetwor1
 
 # Kubernetes does not support swap, so we must disable it
 disable_swap

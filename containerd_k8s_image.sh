@@ -22,10 +22,10 @@ sudo sysctl --system
 
 ###### constants
 USER=Zhihao
-USER_GROUP=containernetwork
+USER_GROUP=k8s
 BASE_DIR=/home/cloudlab-openwhisk
 INSTALL_DIR=$BASE_DIR/install
-K8S_VERSION=1.24.0-00
+K8S_VERSION=1.24.2-00
 
 
 ## mkdir base dir
@@ -46,7 +46,7 @@ wget https://github.com/moby/buildkit/releases/download/v0.10.4/buildkit-v0.10.4
 
 sudo tar Cxzvf /usr/local containerd-1.5.11-linux-amd64.tar.gz
 sudo mkdir -p /usr/local/lib/systemd/system
-sudo mv containerd.service /usr/local/lib/systemd/system/
+cat containerd.service | sudo tee /usr/local/lib/systemd/system/containerd.service
 
 sudo systemctl daemon-reload
 sudo systemctl enable --now containerd
@@ -58,44 +58,9 @@ sudo tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-v1.1.1.tgz
 
 ############################ containerd config.toml
 sudo mkdir -p /etc/containerd/
-cat <<EOF | sudo tee /etc/containerd/config.toml
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
-  [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
-    SystemdCgroup = true
-EOF
+containerd config default | sudo tee /etc/containerd/config.toml
+sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
 sudo systemctl restart containerd
-
-sudo tar Cxzvvf /usr/local/bin nerdctl-0.22.2-linux-amd64.tar.gz
-
-# rootless
-sudo apt-get update
-sudo apt install uidmap slirp4netns
-
-#RootlessKit
-sudo tar Cxzvf /usr/local/bin rootlesskit-x86_64.tar.gz
-
-#BuildKit
-sudo tar Cxzvf /usr/local/ buildkit-v0.10.4.linux-amd64.tar.gz
-
-sudo buildkitd --oci-worker=false --containerd-worker=true &
-
-# enable cgruop v2
-sudo sed -i 's/GRUB_CMDLINE_LINUX="/GRUB_CMDLINE_LINUX="systemd.unified_cgroup_hierarchy=1,/' /etc/default/grub
-sudo update-grub
-
-sudo mkdir -p /etc/systemd/system/user@.service.d
-
-cat <<EOF | sudo tee /etc/systemd/system/user@.service.d/delegate.conf
-[Service]
-Delegate=cpu cpuset io memory pids
-EOF
-
-sudo systemctl daemon-reload
-
-sudo sed -i '120c \\tcontrollers="/etc/systemd/system/user@.service.d/delegate.conf"' /usr/local/bin/containerd-rootless-setuptool.sh
-
-/usr/local/bin/containerd-rootless-setuptool.sh check
-/usr/local/bin/containerd-rootless-setuptool.sh install
 
 
 ##### install kubernetes
