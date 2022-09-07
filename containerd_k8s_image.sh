@@ -39,10 +39,7 @@ pushd $INSTALL_DIR
 wget https://github.com/containerd/containerd/releases/download/v1.5.11/containerd-1.5.11-linux-amd64.tar.gz
 wget https://github.com/opencontainers/runc/releases/download/v1.1.4/runc.amd64
 wget https://github.com/containernetworking/plugins/releases/download/v1.1.1/cni-plugins-linux-amd64-v1.1.1.tgz
-wget https://github.com/containerd/nerdctl/releases/download/v0.22.2/nerdctl-0.22.2-linux-amd64.tar.gz
 wget https://raw.githubusercontent.com/containerd/containerd/main/containerd.service
-wget https://github.com/rootless-containers/rootlesskit/releases/download/v1.0.1/rootlesskit-$(uname -m).tar.gz
-wget https://github.com/moby/buildkit/releases/download/v0.10.4/buildkit-v0.10.4.linux-amd64.tar.gz
 
 sudo tar Cxzvf /usr/local containerd-1.5.11-linux-amd64.tar.gz
 sudo mkdir -p /usr/local/lib/systemd/system
