@@ -31,7 +31,7 @@ wait_invokers_ip(){
     # $1 == invoker nums
     NUM_REGISTERED=0
     NUM_UNREGISTERED=$(($1-NUM_REGISTERED))
-    while [ "$NUM_UNREGISTERED" -ne 0]
+    while [ "$NUM_UNREGISTERED" -ne 0 ]
     do
         sleep 1
         read -r -u${nc[0]} INVOKER_IP
@@ -40,6 +40,7 @@ wait_invokers_ip(){
         NUM_REGISTERED=$(($NUM_REGISTERED+1))
         NUM_UNREGISTERED=$(($1-NUM_REGISTERED))
     done
+    kill $nc_PID
 }
 
 setup_primary() {
@@ -57,6 +58,8 @@ setup_primary() {
     if [ $? -eq 0 ]; then
         printf "%s: %s\n" "$(date +"%T.%N")" "Done! Output in $INSTALL_DIR/k8s_install.log"
     else
+        nodes=1
+        add_cluster_nodes $nodes
         echo ""
         echo "***Error: Error when running kubeadm init command. Check log found in $INSTALL_DIR/k8s_install.log."
         exit 1
@@ -262,9 +265,9 @@ fi
 # Use second argument (node IP) to replace filler in kubeadm configuration
 sudo sed -i "s/REPLACE_ME_WITH_IP/$HOST_ETH0_IP/g" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
 
-coproc nc {nc -l $HOST_ETH0_IP $MASTER_PORT; }
+coproc nc { nc -l $HOST_ETH0_IP $MASTER_PORT; }
 
-wait_invokers_ip
+wait_invokers_ip $1
 
 setup_primary $HOST_ETH0_IP
 

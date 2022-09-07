@@ -37,6 +37,31 @@ send_ip_to_master() {
 
 wait_join_k8s() {
     printf "%s: %s\n" "$(date +"%T.%N")" "nc pid is: $nc_PID"
+    while true; do
+        printf "%s: %s\n" "$(date +"%T.%N")" "Waiting for command to join kubernetes cluster, nc pid is $nc_PID"
+        read -r -u${nc[0]} cmd
+        case $cmd in
+            *"kube"*)
+                MY_CMD=$cmd
+                break 
+                ;;
+            *)
+	    	printf "%s: %s\n" "$(date +"%T.%N")" "Read: $cmd"
+                ;;
+        esac
+	if [ -z "$nc_PID" ]
+	then
+	    printf "%s: %s\n" "$(date +"%T.%N")" "Restarting listener via netcat..."
+	    coproc nc { nc -l $1 $SECONDARY_PORT; }
+	fi
+    done
+    MY_CMD=$(echo sudo $MY_CMD | sed 's/\\//')
+
+    printf "%s: %s\n" "$(date +"%T.%N")" "Command to execute is: $MY_CMD"
+
+    # run command to join kubernetes cluster
+    eval $MY_CMD
+    printf "%s: %s\n" "$(date +"%T.%N")" "Done!"
     kill $nc_PID
 }
 
