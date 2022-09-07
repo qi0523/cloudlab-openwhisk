@@ -66,5 +66,5 @@ bs.size = str(params.tempFileSystemSize) + "GB"
 bs.placement = "any"
 
 #node.addService(rspec.Execute(shell="bash", command="/local/repository/start.sh {} > /home/cloudlab-openwhisk/start.log 2>&1 &".format(params.numInvokers)))
-# start.sh 1 > /home/cloudlab-openwhisk/start.log 2>&1
+# start.sh 1 "false" > /home/cloudlab-openwhisk/start.log 2>&1
 pc.printRequestRSpec()
