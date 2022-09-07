@@ -9,6 +9,8 @@ INVOKER_PORT=3001
 INSTALL_DIR=/home/cloudlab-openwhisk
 HOST_ETH0_IP=$(ifconfig eth0 | awk 'NR==2{print $2}')
 
+#role: control-plane
+
 ## modify containerd, TODO:
 
 
@@ -58,8 +60,6 @@ setup_primary() {
     if [ $? -eq 0 ]; then
         printf "%s: %s\n" "$(date +"%T.%N")" "Done! Output in $INSTALL_DIR/k8s_install.log"
     else
-        nodes=1
-        add_cluster_nodes $nodes
         echo ""
         echo "***Error: Error when running kubeadm init command. Check log found in $INSTALL_DIR/k8s_install.log."
         exit 1
