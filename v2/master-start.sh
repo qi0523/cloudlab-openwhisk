@@ -276,8 +276,8 @@ apply_calico
 add_cluster_nodes $1
 
 # Exit early if we don't need to deploy OpenWhisk
-if [ "$5" = "False" ]; then
-    printf "%s: %s\n" "$(date +"%T.%N")" "Deploy Openwhisk is $4, done!"
+if [ "$2" = "false" ]; then
+    printf "%s: %s\n" "$(date +"%T.%N")" "Don't need to deploy Openwhisk!"
     exit 0
 fi
 
