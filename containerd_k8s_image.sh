@@ -22,7 +22,7 @@ sudo sysctl --system
 
 ###### constants
 USER=Zhihao
-USER_GROUP=k8s
+USER_GROUP=containernetwork
 BASE_DIR=/home/cloudlab-openwhisk
 INSTALL_DIR=$BASE_DIR/install
 K8S_VERSION=1.24.2-00
