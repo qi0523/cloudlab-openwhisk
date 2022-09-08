@@ -10,6 +10,9 @@ INSTALL_DIR=/home/cloudlab-openwhisk
 HOST_ETH0_IP=$(ifconfig eth0 | awk 'NR==2{print $2}')
 
 ## modify containerd, TODO:
+sudo apt install -y apparmor apparmor-utils
+
+## cni plugins TODO:
 
 
 disable_swap() {
@@ -95,7 +98,7 @@ sudo sed -i "s/REPLACE_ME_WITH_IP/$HOST_ETH0_IP/g" /etc/systemd/system/kubelet.s
 
 # listen INVOKER_PORT
 
-coproc nc {nc -l $HOST_ETH0_IP $INVOKER_PORT; }
+coproc nc { nc -l $HOST_ETH0_IP $INVOKER_PORT; }
 
 setup_invoker $1
 
