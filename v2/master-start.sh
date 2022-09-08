@@ -37,14 +37,18 @@ wait_invokers_ip(){
     NUM_UNREGISTERED=$(($1-NUM_REGISTERED))
     while [ "$NUM_UNREGISTERED" -ne 0 ]
     do
-        sleep 1
+        sleep 0.5
+        if [ -z "$nc_PID" ]
+        then
+            printf "%s: %s\n" "$(date +"%T.%N")" "Restarting listener via netcat..."
+            coproc nc { nc -l $HOST_ETH0_IP $MASTER_PORT; }
+        fi
         read -r -u${nc[0]} INVOKER_IP
         printf "%s: %s\n" "$(date +"%T.%N")" "read invoker ip: $INVOKER_IP"
         invoker_ips[$NUM_REGISTERED]=$INVOKER_IP
         NUM_REGISTERED=$(($NUM_REGISTERED+1))
         NUM_UNREGISTERED=$(($1-NUM_REGISTERED))
     done
-    kill $nc_PID
 }
 
 setup_primary() {
@@ -58,7 +62,7 @@ setup_primary() {
 
     # initialize k8 primary node
     printf "%s: %s\n" "$(date +"%T.%N")" "Starting Kubernetes... (this can take several minutes)... "
-    sudo kubeadm init --apiserver-advertise-address=$HOST_ETH0_IP --pod-network-cidr=10.11.0.0/16 > $INSTALL_DIR/k8s_install.log 2>&1
+    sudo kubeadm init --apiserver-advertise-address=$HOST_ETH0_IP --pod-network-cidr=10.244.0.0/16 > $INSTALL_DIR/k8s_install.log 2>&1
     if [ $? -eq 0 ]; then
         printf "%s: %s\n" "$(date +"%T.%N")" "Done! Output in $INSTALL_DIR/k8s_install.log"
     else
@@ -80,42 +84,40 @@ setup_primary() {
     kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 }
 
-apply_calico() {
+apply_flannel() {
+    # flannel
+    pushd $INSTALL_DIR/install
+    wget https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+    kubectl apply -f kube-flannel.yml >> $INSTALL_DIR/flannel_install.log 2>&1
+    popd
     # https://projectcalico.docs.tigera.io/getting-started/kubernetes/helm
-    helm repo add projectcalico https://projectcalico.docs.tigera.io/charts > $INSTALL_DIR/calico_install.log 2>&1 
+    printf "%s: %s\n" "$(date +"%T.%N")" "Loaded flannel pods"
     if [ $? -ne 0 ]; then
-       echo "***Error: Error when loading helm calico repo. Log written to $INSTALL_DIR/calico_install.log"
+       echo "***Error: Error when installing flannel. Log appended to $INSTALL_DIR/flannel_install.log"
        exit 1
     fi
-    printf "%s: %s\n" "$(date +"%T.%N")" "Loaded helm calico repo"
+    printf "%s: %s\n" "$(date +"%T.%N")" "Applied flannel networking from "
 
-    helm install calico projectcalico/tigera-operator --version v3.22.0 >> $INSTALL_DIR/calico_install.log 2>&1
-    if [ $? -ne 0 ]; then
-       echo "***Error: Error when installing calico with helm. Log appended to $INSTALL_DIR/calico_install.log"
-       exit 1
-    fi
-    printf "%s: %s\n" "$(date +"%T.%N")" "Applied Calico networking from "
-
-    # wait for calico pods to be in ready state
-    printf "%s: %s\n" "$(date +"%T.%N")" "Waiting for calico pods to have status of 'Running': "
+    # wait for flannel pods to be in ready state
+    printf "%s: %s\n" "$(date +"%T.%N")" "Waiting for flannel pods to have status of 'Running': "
     sleep 10
-    NUM_PODS=$(kubectl get pods -n calico-system | grep calico | wc -l)
+    NUM_PODS=$(kubectl get pods -A | grep flannel | wc -l)
     while [ "$NUM_PODS" -eq 0 ]
     do
         sleep 5
         printf "."
-        NUM_PODS=$(kubectl get pods -n calico-system | grep calico | wc -l)
+        NUM_PODS=$(kubectl get pods -A | grep flannel | wc -l)
     done
-    NUM_RUNNING=$(kubectl get pods -n calico-system | grep " Running" | wc -l)
+    NUM_RUNNING=$(kubectl get pods -A | grep flannel | grep " Running" | wc -l)
     NUM_RUNNING=$((NUM_PODS-NUM_RUNNING))
     while [ "$NUM_RUNNING" -ne 0 ]
     do
         sleep 5
         printf "."
-        NUM_RUNNING=$(kubectl get pods -n calico-system | grep " Running" | wc -l)
+        NUM_RUNNING=$(kubectl get pods -A | grep flannel | grep " Running" | wc -l)
         NUM_RUNNING=$((NUM_PODS-NUM_RUNNING))
     done
-    printf "%s: %s\n" "$(date +"%T.%N")" "Calico running!"
+    printf "%s: %s\n" "$(date +"%T.%N")" "flannel running!"
 }
 
 add_cluster_nodes() { ## $1 == 1
@@ -273,8 +275,8 @@ wait_invokers_ip $1
 
 setup_primary $HOST_ETH0_IP
 
-# Apply calico networking
-apply_calico
+# Apply flannel networking
+apply_flannel
 
 # Coordinate master to add nodes to the kubernetes cluster
 # Argument is number of nodes

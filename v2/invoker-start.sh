@@ -30,10 +30,13 @@ disable_swap() {
 send_ip_to_master() {
     # $1 == master ip
     printf "%s: %s\n" "$(date +"%T.%N")" "host ip is: $HOST_ETH0_IP"
-    sleep 2
     printf "%s: %s\n" "$(date +"%T.%N")" "Send eth0 ip to master node"
-    echo $HOST_ETH0_IP
     exec 3<>/dev/tcp/$1/$MASTER_PORT
+    while [ "$?" -ne 0 ]
+    do
+        sleep 1
+        exec 3<>/dev/tcp/$1/$MASTER_PORT
+    done
     echo $HOST_ETH0_IP 1>&3
     exec 3<&-
 }
@@ -65,7 +68,6 @@ wait_join_k8s() {
     # run command to join kubernetes cluster
     eval $MY_CMD
     printf "%s: %s\n" "$(date +"%T.%N")" "Done!"
-    kill $nc_PID
 }
 
 setup_invoker() {
