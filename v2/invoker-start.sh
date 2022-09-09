@@ -11,8 +11,9 @@ HOST_ETH0_IP=$(ifconfig eth0 | awk 'NR==2{print $2}')
 
 ## modify containerd, TODO:
 sudo apt install -y apparmor apparmor-utils
-
 ## cni plugins TODO:
+
+
 
 
 disable_swap() {
@@ -76,6 +77,10 @@ setup_invoker() {
     send_ip_to_master $1
     #2. wait to join in k8s cluster.
     wait_join_k8s
+
+    #3. nfs-common
+    sudo apt-get update
+    sudo apt install nfs-common
 }
 
 # Start by recording the arguments

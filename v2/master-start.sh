@@ -162,32 +162,73 @@ add_cluster_nodes() { ## $1 == 1
 prepare_for_openwhisk() {
     # Args: 1 = IP, 2 = num nodes, 3 = num invokers, 4 = invoker engine
 
-    git clone https://github.com/apache/openwhisk-deploy-kube $INSTALL_DIR/openwhisk-deploy-kube
+    # TODO: nfs-server
+    sudo apt-get update
+    sudo apt install nfs-kernel-server
+    NFS_DIR=/proj/containernetwork-PG0/data/nfs
+    sudo mkdir -p $NFS_DIR
+    sudo chmod 777 $NFS_DIR
 
-    pushd $INSTALL_DIR/openwhisk-deploy-kube
-    git pull
+    echo "$NFS_DIR *(fsid=0,rw,sync,no_root_squash)" | sudo tee /etc/exports
+    sudo systemctl restart nfs-server
+    if [ "$?" -ne 0 ]; then
+        echo "nfs server failed..."
+        exit 1
+    fi
+
+    # k8s sc
+    pushd $INSTALL_DIR/install
+    wget https://raw.githubusercontent.com/kubernetes-retired/external-storage/master/nfs-client/deploy/rbac.yaml
+    wget https://raw.githubusercontent.com/kubernetes-retired/external-storage/master/nfs-client/deploy/class.yaml
+    wget https://raw.githubusercontent.com/kubernetes-retired/external-storage/master/nfs-client/deploy/deployment.yaml
+    kubectl apply -f rbac.yaml
+    if [ $? -ne 0 ]; then
+            echo "***Error: Failed to set rbac.yaml"
+            exit -1
+    fi
+    kubectl apply -f class.yaml
+    if [ $? -ne 0 ]; then
+            echo "***Error: Failed to set class.yaml"
+            exit -1
+    fi
+    sed -i 's/10.10.10.60/'"$HOST_ETH0_IP"'/g' deployment.yaml
+    sed -i 's#/ifs/kubernetes#'"$NFS_DIR"'#g' deployment.yaml
+    kubectl apply -f deployment.yaml
+    if [ $? -ne 0 ]; then
+            echo "***Error: Failed to set sc deployment.yaml"
+            exit -1
+    fi
+    nfs_client_running_num=$(kubectl get pods -A | grep nfs-client | grep Running | wc -l)
+    while [ "$nfs_client_running_num" -eq 0 ]
+    do
+        sleep 3
+        echo "wait for nfs_client_running...."
+        nfs_client_running_num=$(kubectl get pods -A | grep nfs-client | grep Running | wc -l)
+    done
+    kubectl patch storageclass managed-nfs-storage -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}' # default sc
     popd
 
-    # Iterate over each node and set the openwhisk role
-    # From https://superuser.com/questions/284187/bash-iterating-over-lines-in-a-variable
-    NODE_NAMES=$(kubectl get nodes -o name)
-    CORE_NODES=$(($2-$3))
-    counter=0
+    #label nodes=core 
+    CONTROLLER_NODE=$(kubectl get nodes | grep master | awk '{print $1}')
+    kubectl label nodes ${CONTROLLER_NODE} openwhisk-role=core
+    # label nodes=invoker
+    INVOKER_NODES=$(kubectl get nodes | grep invoker | awk '{print $1}')
     while IFS= read -r line; do
-        if [ $counter -lt $CORE_NODES ] ; then
-            printf "%s: %s\n" "$(date +"%T.%N")" "Skipped labelling non-invoker node ${line:5}"
-            else
-                kubectl label nodes ${line:5} openwhisk-role=invoker
-                if [ $? -ne 0 ]; then
-                    echo "***Error: Failed to set openwhisk role to invoker on ${line:5}."
-                    exit -1
-                fi
-            printf "%s: %s\n" "$(date +"%T.%N")" "Labelled ${line:5} as openwhisk invoker node"
+        kubectl label nodes ${line} openwhisk-role=invoker
+        if [ $? -ne 0 ]; then
+            echo "***Error: Failed to set openwhisk role to invoker on ${line:5}."
+            exit -1
         fi
-        counter=$((counter+1))
-    done <<< "$NODE_NAMES"
+        printf "%s: %s\n" "$(date +"%T.%N")" "Labelled ${line} as openwhisk invoker node"
+    done <<< "$INVOKER_NODES"
     printf "%s: %s\n" "$(date +"%T.%N")" "Finished labelling nodes."
 
+    # git clone qi0523/openwhisk-deploy-bue
+    git clone https://github.com/qi0523/openwhisk-deploy-kube $INSTALL_DIR/openwhisk-deploy-kube
+
+    pushd $INSTALL_DIR/openwhisk-deploy-kube
+    sed -i "s/REPLACE_ME_WITH_IP/$HOST_ETH0_IP/g" mycluster.yaml
+    popd
     kubectl create namespace openwhisk
     if [ $? -ne 0 ]; then
         echo "***Error: Failed to create openwhisk namespace"
@@ -195,11 +236,7 @@ prepare_for_openwhisk() {
     fi
     printf "%s: %s\n" "$(date +"%T.%N")" "Created openwhisk namespace in Kubernetes."
 
-    cp /local/repository/mycluster.yaml $INSTALL_DIR/openwhisk-deploy-kube/mycluster.yaml
-    sed -i "s/REPLACE_ME_WITH_IP/$1/g" $INSTALL_DIR/openwhisk-deploy-kube/mycluster.yaml
-    sed -i "s/REPLACE_ME_WITH_INVOKER_ENGINE/$4/g" $INSTALL_DIR/openwhisk-deploy-kube/mycluster.yaml
-    sed -i "s/REPLACE_ME_WITH_INVOKER_COUNT/$3/g" $INSTALL_DIR/openwhisk-deploy-kube/mycluster.yaml
-    sudo chown $USER:$PROFILE_GROUP $INSTALL_DIR/openwhisk-deploy-kube/mycluster.yaml
+    sudo chown $USER:$USER_GROUP $INSTALL_DIR/openwhisk-deploy-kube/mycluster.yaml
     sudo chmod -R g+rw $INSTALL_DIR/openwhisk-deploy-kube/mycluster.yaml
     printf "%s: %s\n" "$(date +"%T.%N")" "Updated $INSTALL_DIR/openwhisk-deploy-kube/mycluster.yaml"
     
