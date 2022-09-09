@@ -235,10 +235,6 @@ prepare_for_openwhisk() {
         exit 1
     fi
     printf "%s: %s\n" "$(date +"%T.%N")" "Created openwhisk namespace in Kubernetes."
-
-    sudo chown $USER:$USER_GROUP $INSTALL_DIR/openwhisk-deploy-kube/mycluster.yaml
-    sudo chmod -R g+rw $INSTALL_DIR/openwhisk-deploy-kube/mycluster.yaml
-    printf "%s: %s\n" "$(date +"%T.%N")" "Updated $INSTALL_DIR/openwhisk-deploy-kube/mycluster.yaml"
     
     if [ $4 == "docker" ] ; then
         if test -d "/mydata"; then
