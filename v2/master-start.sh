@@ -176,37 +176,25 @@ prepare_for_openwhisk() {
         exit 1
     fi
 
+    # nfs-subdir-external-provisioner
+    helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/nfs-subdir-external-provisioner/
+    helm install nfs-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
+        --set nfs.server=$HOST_ETH0_IP \
+        --set nfs.path=$NFS_DIR \
+        --set storageClass.defaultClass=true
+    if [ "$?" -ne 0 ]; then
+        echo "nfs provisioner failed..."
+        exit 1
+    fi
+
     # k8s sc
-    pushd $INSTALL_DIR/install
-    wget https://raw.githubusercontent.com/kubernetes-retired/external-storage/master/nfs-client/deploy/rbac.yaml
-    wget https://raw.githubusercontent.com/kubernetes-retired/external-storage/master/nfs-client/deploy/class.yaml
-    wget https://raw.githubusercontent.com/kubernetes-retired/external-storage/master/nfs-client/deploy/deployment.yaml
-    kubectl apply -f rbac.yaml
-    if [ $? -ne 0 ]; then
-            echo "***Error: Failed to set rbac.yaml"
-            exit -1
-    fi
-    kubectl apply -f class.yaml
-    if [ $? -ne 0 ]; then
-            echo "***Error: Failed to set class.yaml"
-            exit -1
-    fi
-    sed -i 's/10.10.10.60/'"$HOST_ETH0_IP"'/g' deployment.yaml
-    sed -i 's#/ifs/kubernetes#'"$NFS_DIR"'#g' deployment.yaml
-    kubectl apply -f deployment.yaml
-    if [ $? -ne 0 ]; then
-            echo "***Error: Failed to set sc deployment.yaml"
-            exit -1
-    fi
-    nfs_client_running_num=$(kubectl get pods -A | grep nfs-client | grep Running | wc -l)
+    nfs_client_running_num=$(kubectl get pods -A | grep nfs-provisioner | grep Running | wc -l)
     while [ "$nfs_client_running_num" -eq 0 ]
     do
         sleep 3
-        echo "wait for nfs_client_running...."
-        nfs_client_running_num=$(kubectl get pods -A | grep nfs-client | grep Running | wc -l)
+        echo "wait for nfs_provisioner_running...."
+        nfs_client_running_num=$(kubectl get pods -A | grep nfs-provisioner | grep Running | wc -l)
     done
-    kubectl patch storageclass managed-nfs-storage -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}' # default sc
-    popd
 
     #label nodes=core 
     CONTROLLER_NODE=$(kubectl get nodes | grep master | awk '{print $1}')
@@ -236,12 +224,12 @@ prepare_for_openwhisk() {
     fi
     printf "%s: %s\n" "$(date +"%T.%N")" "Created openwhisk namespace in Kubernetes."
     
-    if [ $4 == "docker" ] ; then
-        if test -d "/mydata"; then
-	    sed -i "s/\/var\/lib\/docker\/containers/\/mydata\/docker\/containers/g" $INSTALL_DIR/openwhisk-deploy-kube/helm/openwhisk/templates/_invoker-helpers.tpl
-            printf "%s: %s\n" "$(date +"%T.%N")" "Updated dockerrootdir to /mydata/docker/containers in $INSTALL_DIR/openwhisk-deploy-kube/helm/openwhisk/templates/_invoker-helpers.tpl"
-        fi
-    fi
+    # if [ $4 == "docker" ] ; then
+    #     if test -d "/mydata"; then
+	#     sed -i "s/\/var\/lib\/docker\/containers/\/mydata\/docker\/containers/g" $INSTALL_DIR/openwhisk-deploy-kube/helm/openwhisk/templates/_invoker-helpers.tpl
+    #         printf "%s: %s\n" "$(date +"%T.%N")" "Updated dockerrootdir to /mydata/docker/containers in $INSTALL_DIR/openwhisk-deploy-kube/helm/openwhisk/templates/_invoker-helpers.tpl"
+    #     fi
+    # fi
 }
 
 
@@ -322,10 +310,10 @@ if [ "$2" = "false" ]; then
 fi
 
 # Prepare cluster to deploy OpenWhisk: takes IP, num nodes, invoker num, and invoker engine
-prepare_for_openwhisk $2 $3 $6 $7
+prepare_for_openwhisk
 
 # Deploy OpenWhisk via Helm
 # Takes cluster IP
-deploy_openwhisk $2
+deploy_openwhisk $HOST_ETH0_IP
 
 printf "%s: %s\n" "$(date +"%T.%N")" "Profile setup completed!"
