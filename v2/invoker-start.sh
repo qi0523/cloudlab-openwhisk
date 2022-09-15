@@ -10,10 +10,8 @@ INSTALL_DIR=/home/cloudlab-openwhisk
 HOST_ETH0_IP=$(ifconfig eth0 | awk 'NR==2{print $2}')
 
 ## modify containerd, TODO:
-sudo apt install -y apparmor apparmor-utils
+# sudo apt install -y apparmor apparmor-utils
 ## cni plugins TODO:
-
-
 
 
 disable_swap() {
@@ -80,7 +78,7 @@ setup_invoker() {
 
     #3. nfs-common
     sudo apt-get update
-    sudo apt install nfs-common
+    sudo apt install nfs-common -y
 }
 
 # Start by recording the arguments

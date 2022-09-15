@@ -12,10 +12,6 @@ import geni.portal as portal
 # Import the ProtoGENI library.
 import geni.rspec.pg as rspec
 
-BASE_IP = "10.10.1"
-BANDWIDTH = 10000000
-IMAGE = 'urn:publicid:IDN+clemson.cloudlab.us+image+containernetwork-PG0:containerd-k8s'
-
 pc = portal.Context()
 pc.defineParameter("nodeCount", 
                    "Number of nodes in the experiment. It is recommended that at least 3 be used.",
@@ -27,37 +23,29 @@ params = pc.bindParameters()
 pc.verifyParameters()
 request = pc.makeRequestRSpec()
 
-def create_node(name, nodes, interfaces):
+router = request.XenVM("router")
+
+def create_node(name, nodes):
   # Create node
   node = request.XenVM(name)
   node.exclusive = True
   node.cores = 2
-  # Ask for 2GB of ram
+  # Ask for 4GB of ram
   node.ram   = 4096
-  node.disk_image = IMAGE
-  
-  # Add interface
-  iface = node.addInterface("if1")
-  iface.addAddress(rspec.IPv4Address("{}.{}".format(BASE_IP, 1 + len(nodes)), "255.255.255.0"))
-  interfaces.append(iface)
   # Add to node list
   nodes.append(node)
 
 nodes = []
-interfaces = []
 
 for i in range(params.nodeCount):
-    name = "ow"+str(i+1)
-    create_node(name, nodes, interfaces)
+    name = "node"+str(i+1)
+    create_node(name, nodes)
 
 for i in range(params.nodeCount):
-    for j in range(i+1, params.nodeCount):
-        link = request.Link("ow"+str(i+1)+"_ow"+str(j+1))
-        link.addInterface(interfaces[i])
-        link.addInterface(interfaces[j])
-        if i==0:
-            link.bandwidth=40000000
-        else:
-            link.bandwidth=BANDWIDTH
+    link = request.Link("node"+str(i+1),"", (nodes[i], router))
+    if i==0:
+        link.bandwidth=40000000 # 40Gbps
+    else:
+        link.bandwidth=10000000 # 1Gbps
 
 pc.printRequestRSpec()

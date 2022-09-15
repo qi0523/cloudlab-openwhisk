@@ -12,7 +12,7 @@ HOST_ETH0_IP=$(ifconfig eth0 | awk 'NR==2{print $2}')
 #role: control-plane
 
 ## modify containerd, TODO:
-sudo apt install -y apparmor apparmor-utils
+# sudo apt install -y apparmor apparmor-utils
 
 ## cni plugins TODO:
 
@@ -131,7 +131,7 @@ add_cluster_nodes() { ## $1 == 1
     counter=0
     while [ "$NUM_REGISTERED" -ne 0 ]
     do 
-	sleep 2
+	sleep 3
         printf "%s: %s\n" "$(date +"%T.%N")" "Registering nodes, attempt #$counter, registered=$NUM_REGISTERED"
         for (( i=0; i<$1; i++ ))
         do
@@ -151,7 +151,7 @@ add_cluster_nodes() { ## $1 == 1
     NUM_READY=$(($1-NUM_READY+1))
     while [ "$NUM_READY" -ne 0 ]
     do
-        sleep 3
+        sleep 5
         printf "."
         NUM_READY=$(kubectl get nodes | grep " Ready" | wc -l)
         NUM_READY=$(($1-NUM_READY+1))
@@ -164,7 +164,7 @@ prepare_for_openwhisk() {
 
     # TODO: nfs-server
     sudo apt-get update
-    sudo apt install nfs-kernel-server
+    sudo apt install nfs-kernel-server -y
     NFS_DIR=/proj/containernetwork-PG0/data/nfs
     sudo mkdir -p $NFS_DIR
     sudo chmod 777 $NFS_DIR
@@ -314,6 +314,6 @@ prepare_for_openwhisk
 
 # Deploy OpenWhisk via Helm
 # Takes cluster IP
-deploy_openwhisk $HOST_ETH0_IP
+# deploy_openwhisk $HOST_ETH0_IP
 
 printf "%s: %s\n" "$(date +"%T.%N")" "Profile setup completed!"
