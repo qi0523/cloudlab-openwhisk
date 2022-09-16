@@ -238,7 +238,7 @@ deploy_openwhisk() {
 
     # Deploy openwhisk via helm
     printf "%s: %s\n" "$(date +"%T.%N")" "About to deploy OpenWhisk via Helm... "
-    cd $INSTALL_DIR/openwhisk-deploy-kube
+    pushd $INSTALL_DIR/openwhisk-deploy-kube
     helm install owdev ./helm/openwhisk -n openwhisk -f mycluster.yaml > $INSTALL_DIR/ow_install.log 2>&1 
     if [ $? -eq 0 ]; then
         printf "%s: %s\n" "$(date +"%T.%N")" "Ran helm command to deploy OpenWhisk"
@@ -247,7 +247,6 @@ deploy_openwhisk() {
         echo "***Error: Helm install error. Please check $INSTALL_DIR/ow_install.log."
         exit 1
     fi
-    cd $INSTALL_DIR
 
     # Monitor pods until openwhisk is fully deployed
     kubectl get pods -n openwhisk
@@ -259,16 +258,20 @@ deploy_openwhisk() {
         DEPLOY_COMPLETE=$(kubectl get pods -n openwhisk | grep owdev-install-packages | grep Completed | wc -l)
     done
     printf "%s: %s\n" "$(date +"%T.%N")" "OpenWhisk deployed!"
-    
+    popd
+
+    pushd $INSTALL_DIR/install
+    # Download and install the OpenWhisk CLI
+    wget https://github.com/apache/openwhisk-cli/releases/download/latest/OpenWhisk_CLI-latest-linux-386.tgz
+    sudo tar Cxzvf /usr/local/bin OpenWhisk_CLI-latest-linux-386.tgz
+
     # Set up wsk properties for all users
-    for FILE in /users/*; do
-        CURRENT_USER=${FILE##*/}
         echo -e "
 	APIHOST=$1:31001
 	AUTH=23bc46b1-71f6-4ed5-8c54-816aa4f8c502:123zO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP
-	" | sudo tee /users/$CURRENT_USER/.wskprops
-	sudo chown $CURRENT_USER:$PROFILE_GROUP /users/$CURRENT_USER/.wskprops
-    done
+	" | sudo tee /users/$USER/.wskprops
+	sudo chown $USER:$USER_GROUP /users/$USER/.wskprops
+    popd
 }
 
 # Start by recording the arguments
