@@ -3,7 +3,7 @@ import geni.portal as portal
 # Import the ProtoGENI library.
 import geni.rspec.pg as rspec
 
-IMAGE = 'urn:publicid:IDN+clemson.cloudlab.us+image+containernetwork-PG0:containerd-k8s'
+IMAGE = 'urn:publicid:IDN+clemson.cloudlab.us+image+containernetwork-PG0:containerdv2-k8s'
 
 pc = portal.Context()
 
