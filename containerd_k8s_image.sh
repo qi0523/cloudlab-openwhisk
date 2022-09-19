@@ -49,8 +49,12 @@ cat containerd.service | sudo tee /usr/local/lib/systemd/system/containerd.servi
 sudo systemctl daemon-reload
 sudo systemctl enable --now containerd
 
+#runc /sys/fs/cgroup/memory/memory.memsw
 sudo install -m 755 runc.amd64 /usr/local/sbin/runc
+sudo sed -i 's/GRUB_CMDLINE_LINUX="/GRUB_CMDLINE_LINUX="cgroup_enable=memory swapaccount=1,/' /etc/default/grub
+sudo update-grub
 
+#cni-plugin
 sudo mkdir -p /opt/cni/bin
 sudo tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-v1.1.1.tgz
 
@@ -61,7 +65,7 @@ sudo mkdir -p /var/lib/nerdctl
 ############################ containerd config.toml
 sudo mkdir -p /etc/containerd/
 containerd config default | sudo tee /etc/containerd/config.toml
-sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+#sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
 sudo systemctl restart containerd
 
 
@@ -74,14 +78,15 @@ sudo apt-mark hold kubelet kubeadm kubectl
 
 # Set to use private IP
 sudo sed -i "s/KUBELET_CONFIG_ARGS=--config=\/var\/lib\/kubelet\/config\.yaml/KUBELET_CONFIG_ARGS=--config=\/var\/lib\/kubelet\/config\.yaml --node-ip=REPLACE_ME_WITH_IP/g" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+sudo sed -i '4a Environment="cgroup-driver=systemd/cgroup-driver=cgroupfs"' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
 
 ######## kubelet config.yaml
-sudo mkdir -p /var/lib/kubelet/
-cat <<EOF | sudo tee /var/lib/kubelet/config.yaml
-kind: KubeletConfiguration
-apiVersion: kubelet.config.k8s.io/v1beta1
-cgroupDriver: systemd
-EOF
+# sudo mkdir -p /var/lib/kubelet/
+# cat <<EOF | sudo tee /var/lib/kubelet/config.yaml
+# kind: KubeletConfiguration
+# apiVersion: kubelet.config.k8s.io/v1beta1
+# cgroupDriver: systemd
+# EOF
 
 popd
 
