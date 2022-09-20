@@ -8,6 +8,11 @@ MASTER_PORT=3000
 INVOKER_PORT=3001
 INSTALL_DIR=/home/cloudlab-openwhisk
 HOST_ETH0_IP=$(ifconfig eth0 | awk 'NR==2{print $2}')
+HOST_NAME=$(hostname | awk 'BEGIN{FS="."} {print $1}')
+
+# change hostname
+sudo hostnamectl set-hostname $HOST_NAME
+sudo sed -i "4a 127.0.0.1 $HOST_NAME" /etc/hosts
 
 #role: control-plane
 
