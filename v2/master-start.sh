@@ -12,7 +12,7 @@ HOST_ETH0_IP=$(ifconfig eth0 | awk 'NR==2{print $2}')
 #role: control-plane
 
 ## modify containerd, TODO:
-# sudo apt install -y apparmor apparmor-utils
+sudo apt install -y apparmor apparmor-utils
 
 ## cni plugins TODO:
 
