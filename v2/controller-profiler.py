@@ -67,5 +67,5 @@ bs.placement = "any"
 
 #node.addService(rspec.Execute(shell="bash", command="/local/repository/start.sh {} > /home/cloudlab-openwhisk/start.log 2>&1 &".format(params.numInvokers)))
 # ./start.sh 1 "false" > /home/cloudlab-openwhisk/start.log 2>&1
-# ./st.sh 2 "true" > /home/cloudlab-openwhisk/start.log 2>&1
+# bash ./st.sh 2 "true" > /home/cloudlab-openwhisk/start.log 2>&1
 pc.printRequestRSpec()

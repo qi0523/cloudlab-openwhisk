@@ -73,5 +73,5 @@ for i in range(params.nodeCount):
 # for i, node in enumerate(nodes[0:]):
 #     node.addService(rspec.Execute(shell="bash", command="/local/repository/start.sh {} > /home/cloudlab-openwhisk/start.log 2>&1 &".format(params.masterIP)))
 # ./start.sh masterip > /home/cloudlab-openwhisk/start.log 2>&1
-# ./st.sh 172.17.75.1 > /home/cloudlab-openwhisk/start.log 2>&1
+# bash ./st.sh 172.17.103.1 > /home/cloudlab-openwhisk/start.log 2>&1
 pc.printRequestRSpec()

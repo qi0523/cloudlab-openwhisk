@@ -267,7 +267,7 @@ deploy_openwhisk() {
     DEPLOY_COMPLETE=$(kubectl get pods -n openwhisk | grep owdev-install-packages | grep Completed | wc -l)
     while [ "$DEPLOY_COMPLETE" -ne 1 ]
     do
-        sleep 2
+        sleep 10
         DEPLOY_COMPLETE=$(kubectl get pods -n openwhisk | grep owdev-install-packages | grep Completed | wc -l)
     done
     printf "%s: %s\n" "$(date +"%T.%N")" "OpenWhisk deployed!"
@@ -276,7 +276,7 @@ deploy_openwhisk() {
     pushd $INSTALL_DIR/install
     # Download and install the OpenWhisk CLI
     wget https://github.com/apache/openwhisk-cli/releases/download/latest/OpenWhisk_CLI-latest-linux-386.tgz
-    sudo tar Cxzvf /usr/local/bin OpenWhisk_CLI-latest-linux-386.tgz
+    sudo tar -xzvf OpenWhisk_CLI-latest-linux-386.tgz -C /usr/local/bin wsk
 
     # Set up wsk properties for all users
         echo -e "
@@ -330,6 +330,6 @@ prepare_for_openwhisk
 
 # Deploy OpenWhisk via Helm
 # Takes cluster IP
-# deploy_openwhisk $HOST_ETH0_IP
+deploy_openwhisk $HOST_ETH0_IP
 
 printf "%s: %s\n" "$(date +"%T.%N")" "Profile setup completed!"
