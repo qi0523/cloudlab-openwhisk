@@ -1,0 +1,27 @@
+REPOSITORY                       	TAG        IMAGE ID        CREATED              PLATFORM       SIZE          BLOB SIZE
+openwhisk/action-dotnet-v2.2     	latest     6e9fdafd16ee    48 minutes ago       linux/amd64    173.2 MiB     67.1 MiB
+openwhisk/action-dotnet-v3.1     	latest     43da4a2d8eb1    43 minutes ago       linux/amd64    180.7 MiB     74.7 MiB
+openwhisk/action-golang-v1.13    	latest     4cd709a94bc1    22 minutes ago       linux/amd64    1.0 GiB       384.2 MiB
+openwhisk/action-golang-v1.15    	latest     bd7421b70199    40 minutes ago       linux/amd64    1023.4 MiB    363.6 MiB
+openwhisk/action-golang-v1.16    	latest     41525a765520    20 minutes ago       linux/amd64    1.1 GiB       394.0 MiB
+openwhisk/action-golang-v1.17    	latest     030b25a43db2    20 minutes ago       linux/amd64    1.1 GiB       370.2 MiB
+openwhisk/action-golang-v1.18    	latest     7c9da088299c    37 minutes ago       linux/amd64    1.2 GiB       401.7 MiB
+openwhisk/action-nodejs-v10      	latest     06281e8268af    About an hour ago    linux/amd64    1020.0 MiB    356.3 MiB
+openwhisk/action-nodejs-v12      	latest     1157c93ffef8    43 minutes ago       linux/amd64    1.0 GiB       358.2 MiB
+openwhisk/action-nodejs-v14      	latest     7fde2caf2e10    31 minutes ago       linux/amd64    1.0 GiB       370.0 MiB
+openwhisk/action-nodejs-v18      	21de03c    7976e473b8a0    29 minutes ago       linux/amd64    1.1 GiB       381.4 MiB
+openwhisk/action-nodejs-v8       	latest     e9dbb8272160    54 minutes ago       linux/amd64    1009.4 MiB    353.8 MiB
+openwhisk/action-php-v7.3        	latest     f579d9f1a7da    48 minutes ago       linux/amd64    621.3 MiB     199.5 MiB
+openwhisk/action-php-v7.4        	latest     e4663528a46b    41 minutes ago       linux/amd64    1008.9 MiB    306.9 MiB
+openwhisk/action-python-v3.7     	latest     4d242a19e72f    33 minutes ago       linux/amd64    1010.9 MiB    356.4 MiB
+openwhisk/action-python-v3.9     	latest     e6f15418af66    39 minutes ago       linux/amd64    1.0 GiB       366.4 MiB
+openwhisk/action-ruby-v2.5       	latest     71cbd652e1fb    10 minutes ago       linux/amd64    941.4 MiB     343.5 MiB
+openwhisk/action-swift-v4.2      	latest     ef36748187ea    2 minutes ago        linux/amd64    1.5 GiB       515.3 MiB
+openwhisk/action-swift-v5.1      	latest     8a4f089e4a2f    42 minutes ago       linux/amd64    1.6 GiB       536.9 MiB
+openwhisk/action-swift-v5.4      	latest     0e471505c92b    48 seconds ago       linux/amd64    2.2 GiB       700.9 MiB
+openwhisk/java8action            	latest     76b03e2f0de1    56 minutes ago       linux/amd64    629.3 MiB     336.7 MiB
+openwhisk/python2action          	latest     87c52d216add    12 minutes ago       linux/amd64    360.6 MiB     113.0 MiB
+
+helm install owdev ./helm/openwhisk -n openwhisk -f mycluster.yaml
+
+crictl rmi qi0523/invoker:latest
