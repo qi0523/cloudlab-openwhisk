@@ -57,9 +57,10 @@ def create_node(name, nodes):
   node.disk_image = IMAGE
   
   # Add extra storage space
-  bs = node.Blockstore(name + "-bs", "/mydata")
-  bs.size = str(params.tempFileSystemSize) + "GB"
-  bs.placement = "any"
+  if (params.tempFileSystemSize > 0):
+    bs = node.Blockstore(name + "bs", "/mydata")
+    bs.size = str(params.tempFileSystemSize) + "GB"
+    bs.placement = "any"
   
   # Add to node list
   nodes.append(node)

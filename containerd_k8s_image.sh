@@ -36,13 +36,13 @@ mkdir -p $INSTALL_DIR
 pushd $INSTALL_DIR
 
 ##### install containerd-1.5.11
-wget https://github.com/containerd/containerd/releases/download/v1.5.11/containerd-1.5.11-linux-amd64.tar.gz
+wget https://github.com/qi0523/containerd/releases/download/v1.0.2/containerd-1.0.2-linux-amd64.tar.gz
 wget https://github.com/opencontainers/runc/releases/download/v1.1.4/runc.amd64
 wget https://github.com/containernetworking/plugins/releases/download/v1.1.1/cni-plugins-linux-amd64-v1.1.1.tgz
 wget https://raw.githubusercontent.com/containerd/containerd/main/containerd.service
-wget https://github.com/qi0523/nerdctl/files/9616698/nerdctl-0.23.1-linux-amd64.tar.gz
+wget https://github.com/qi0523/nerdctl/releases/download/v0.23.2/nerdctl-0.23.2-linux-amd64.tar.gz
 
-sudo tar Cxzvf /usr/local containerd-1.5.11-linux-amd64.tar.gz
+sudo tar Cxzvf /usr/local containerd-1.0.2-linux-amd64.tar.gz
 sudo mkdir -p /usr/local/lib/systemd/system
 cat containerd.service | sudo tee /usr/local/lib/systemd/system/containerd.service
 
@@ -59,7 +59,7 @@ sudo mkdir -p /opt/cni/bin
 sudo tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-v1.1.1.tgz
 
 #nerdctl
-sudo tar -xvzf nerdctl-0.23.1-linux-amd64.tar.gz -C /usr/bin nerdctl
+sudo tar -xvzf nerdctl-0.23.2-linux-amd64.tar.gz -C /usr/bin nerdctl
 sudo mkdir -p /var/lib/nerdctl
 
 ############################ containerd config.toml
@@ -81,12 +81,21 @@ sudo sed -i "s/KUBELET_CONFIG_ARGS=--config=\/var\/lib\/kubelet\/config\.yaml/KU
 sudo sed -i '4a Environment="cgroup-driver=systemd/cgroup-driver=cgroupfs"' /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
 
 ######## kubelet config.yaml
-# sudo mkdir -p /var/lib/kubelet/
-# cat <<EOF | sudo tee /var/lib/kubelet/config.yaml
-# kind: KubeletConfiguration
-# apiVersion: kubelet.config.k8s.io/v1beta1
-# cgroupDriver: systemd
-# EOF
+sudo mkdir -p /var/lib/kubelet/
+cat <<EOF | sudo tee /var/lib/kubelet/config.yaml
+kind: KubeletConfiguration
+apiVersion: kubelet.config.k8s.io/v1beta1
+imageGCHighThresholdPercent: 100
+EOF
+
+##### install distribution
+wget https://github.com/qi0523/distribution-agent/releases/download/v1.1.0/distribution-agent-1.1.0.tar.gz
+sudo tar Cxzvf /usr/local/bin distribution-agent-1.1.0.tar.gz
+
+##### install 
+git clone https://github.com/magnific0/wondershaper.git
+cd wondershaper
+sudo make install
 
 popd
 

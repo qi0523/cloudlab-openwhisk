@@ -26,11 +26,17 @@ sudo tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-v1.1.1.tgz
 popd
 
 ## memory.memsw
-sudo sed -i 's/GRUB_CMDLINE_LINUX="/GRUB_CMDLINE_LINUX="cgroup_enable=memory swapaccount=1,/' /etc/default/grub
-sudo update-grub
+# sudo sed -i 's/GRUB_CMDLINE_LINUX="/GRUB_CMDLINE_LINUX="cgroup_enable=memory swapaccount=1,/' /etc/default/grub
+# sudo update-grub
 
-#invoker ip array
-invoker_ips=()
+## modify containerd
+configure_docker_storage() {
+    printf "%s: %s\n" "$(date +"%T.%N")" "Configuring containerd storage"
+    sudo mkdir /mydata/var/lib/containerd
+    sudo sed -i 's#root = "/var/lib/containerd"#root = "/mydata/var/lib/containerd"#g' config.toml
+    sudo systemctl restart containerd || (echo "ERROR: containerd installation failed, exiting." && exit -1)
+    printf "%s: %s\n" "$(date +"%T.%N")" "Configured containerd storage to use mountpoint"
+}
 
 disable_swap() {
     # Turn swap off and comment out swap line in /etc/fstab
@@ -43,6 +49,9 @@ disable_swap() {
     fi
     sudo sed -i 's/UUID=.*swap/# &/' /etc/fstab
 }
+
+#invoker ip array
+invoker_ips=()
 
 wait_invokers_ip(){
     # $1 == invoker nums

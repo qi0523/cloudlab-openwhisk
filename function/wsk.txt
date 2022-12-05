@@ -1,0 +1,14 @@
+wsk action create hello-go hello.go
+
+wsk action create helloPHP hello.php
+
+javac Hello.java
+jar cvf hello.jar Hello.class
+wsk action create helloJava hello.jar --main Hello
+
+wsk action create helloPython hello.py
+
+wsk action create hello_ruby hello.rb
+wsk action invoke --result hello_ruby --param name World
+
+wsk action create helloSwift hello.swift

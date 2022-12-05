@@ -25,3 +25,56 @@ openwhisk/python2action          	latest     87c52d216add    12 minutes ago     
 helm install owdev ./helm/openwhisk -n openwhisk -f mycluster.yaml
 
 crictl rmi qi0523/invoker:latest
+
+wget https://github.com/qi0523/distribution-agent/files/9799981/distribution-agent.tar.gz
+sudo tar Cxzvf /usr/bin distribution-agent.tar.gz
+
+sudo nerdctl --insecure-registry=true pull 172.17.87.1:30000/openwhisk/action-php-v7.3:latest 
+
+sudo nerdctl rmi 172.17.87.1:30000/openwhisk/action-php-v7.3:latest
+
+nerdctl --snapshotter=stargz --insecure-registry=true pull 172.17.61.1:30000/qi0523/ubuntu:latest
+
+openwhisk/action-golang-v1.15
+
+openwhisk/action-nodejs-v8
+openwhisk/action-nodejs-v10
+openwhisk/action-nodejs-v12
+openwhisk/action-nodejs-v14
+openwhisk/action-nodejs-v16
+
+openwhisk/action-php-v7.4
+
+openwhisk/action-python-v3.9
+
+openwhisk/python2action
+
+openwhisk/java8action
+
+openwhisk/action-dotnet-v3.1
+
+openwhisk/action-ruby-v2.5
+
+openwhisk/action-swift-v4.2
+
+alibaba: custom
+openwhisk/action-ruby-v2.5:1.20.0 - java11
+openwhisk/action-swift-v4.2:1.20.0 - custom
+
+["nodejs4.4","nodejs6","nodejs8","nodejs10","nodejs12","python3","python2.7","java8","java11","php7.2","dotnetcore2.1","golang1.8","custom"]
+["action-nodejs-v8","action-nodejs-v10","action-nodejs-v12","action-nodejs-v14","action-nodejs-v16","action-python-v3.9","python2action",
+"java8action","action-ruby-v2.5","action-php-v7.4","action-dotnet-v3.1","action-golang-v1.18","action-swift-v4.2"]
+
+sudo docker run -d \
+  -p 30000:5000 \
+  --restart=always \
+  --name registry \
+  -v /proj/containernetwork-PG0/registry:/var/lib/registry \
+  registry:2
+
+sudo nerdctl run -d \
+  -p 30000:5000 \
+  --restart=always \
+  --name registry \
+  -v /proj/containernetwork-PG0/registry:/var/lib/registry \
+  registry:2
