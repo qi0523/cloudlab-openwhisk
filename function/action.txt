@@ -78,5 +78,8 @@ openwhisk/action-ruby-v2.5:1.20.0 - java11
 openwhisk/action-swift-v4.2:1.20.0 - custom
 
 ["nodejs4.4","nodejs6","nodejs8","nodejs10","nodejs12","python3","python2.7","java8","java11","php7.2","dotnetcore2.1","golang1.8","custom"]
+
+["nodejs:8","nodejs:10","nodejs:12","nodejs:14","nodejs:16","python:3","python:2","java:8","ruby:2.5","php:7.4","dotnet:3.1","golang:1.15","swift:4.2"]
+
 ["action-nodejs-v8","action-nodejs-v10","action-nodejs-v12","action-nodejs-v14","action-nodejs-v16","action-python-v3.9","python2action",
 "java8action","action-ruby-v2.5","action-php-v7.4","action-dotnet-v3.1","action-golang-v1.18","action-swift-v4.2"]
