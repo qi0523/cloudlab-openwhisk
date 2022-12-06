@@ -245,13 +245,19 @@ prepare_for_openwhisk() {
         exit 1
     fi
     printf "%s: %s\n" "$(date +"%T.%N")" "Created openwhisk namespace in Kubernetes."
-    
-    # if [ $4 == "docker" ] ; then
-    #     if test -d "/mydata"; then
-	#     sed -i "s/\/var\/lib\/docker\/containers/\/mydata\/docker\/containers/g" $INSTALL_DIR/openwhisk-deploy-kube/helm/openwhisk/templates/_invoker-helpers.tpl
-    #         printf "%s: %s\n" "$(date +"%T.%N")" "Updated dockerrootdir to /mydata/docker/containers in $INSTALL_DIR/openwhisk-deploy-kube/helm/openwhisk/templates/_invoker-helpers.tpl"
-    #     fi
-    # fi
+
+    pushd $INSTALL_DIR/install
+    # Download and install the OpenWhisk CLI
+    wget https://github.com/apache/openwhisk-cli/releases/download/latest/OpenWhisk_CLI-latest-linux-386.tgz
+    sudo tar -xzvf OpenWhisk_CLI-latest-linux-386.tgz -C /usr/local/bin wsk
+
+    # Set up wsk properties for all users
+        echo -e "
+	APIHOST=$1:31001
+	AUTH=23bc46b1-71f6-4ed5-8c54-816aa4f8c502:123zO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP
+	" | sudo tee /users/$USER/.wskprops
+	sudo chown $USER:$USER_GROUP /users/$USER/.wskprops
+    popd
 }
 
 
@@ -280,19 +286,6 @@ deploy_openwhisk() {
         DEPLOY_COMPLETE=$(kubectl get pods -n openwhisk | grep owdev-install-packages | grep Completed | wc -l)
     done
     printf "%s: %s\n" "$(date +"%T.%N")" "OpenWhisk deployed!"
-    popd
-
-    pushd $INSTALL_DIR/install
-    # Download and install the OpenWhisk CLI
-    wget https://github.com/apache/openwhisk-cli/releases/download/latest/OpenWhisk_CLI-latest-linux-386.tgz
-    sudo tar -xzvf OpenWhisk_CLI-latest-linux-386.tgz -C /usr/local/bin wsk
-
-    # Set up wsk properties for all users
-        echo -e "
-	APIHOST=$1:31001
-	AUTH=23bc46b1-71f6-4ed5-8c54-816aa4f8c502:123zO3xZCLrMN6v2BKK1dXYFpXlPkccOFqm12CdAsMgRU4VrNZ9lyGVCGuMDGIwP
-	" | sudo tee /users/$USER/.wskprops
-	sudo chown $USER:$USER_GROUP /users/$USER/.wskprops
     popd
 }
 
@@ -329,16 +322,16 @@ apply_flannel
 add_cluster_nodes $1
 
 # Exit early if we don't need to deploy OpenWhisk
-if [ "$2" = "false" ]; then
-    printf "%s: %s\n" "$(date +"%T.%N")" "Don't need to deploy Openwhisk!"
-    exit 0
-fi
+# if [ "$2" = "false" ]; then
+#     printf "%s: %s\n" "$(date +"%T.%N")" "Don't need to deploy Openwhisk!"
+#     exit 0
+# fi
 
 # Prepare cluster to deploy OpenWhisk: takes IP, num nodes, invoker num, and invoker engine
 prepare_for_openwhisk
 
 # Deploy OpenWhisk via Helm
 # Takes cluster IP
-deploy_openwhisk $HOST_ETH0_IP
+#deploy_openwhisk $HOST_ETH0_IP
 
 printf "%s: %s\n" "$(date +"%T.%N")" "Profile setup completed!"

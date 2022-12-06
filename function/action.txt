@@ -35,7 +35,7 @@ sudo nerdctl rmi 172.17.87.1:30000/openwhisk/action-php-v7.3:latest
 
 nerdctl --snapshotter=stargz --insecure-registry=true pull 172.17.61.1:30000/qi0523/ubuntu:latest
 
-openwhisk/action-golang-v1.15
+openwhisk/action-golang-v1.15 sudo nerdctl tag openwhisk/action-golang-v1.15 172.17.23.1:30000/openwhisk/action-golang-v1.15:1.20.0
 
 openwhisk/action-nodejs-v8
 openwhisk/action-nodejs-v10
@@ -43,27 +43,19 @@ openwhisk/action-nodejs-v12
 openwhisk/action-nodejs-v14
 openwhisk/action-nodejs-v16
 
-openwhisk/action-php-v7.4
+openwhisk/action-php-v7.4 sudo nerdctl tag openwhisk/action-php-v7.4 172.17.23.1:30000/openwhisk/action-php-v7.4:1.20.0
 
-openwhisk/action-python-v3.9
+openwhisk/action-python-v3.9 sudo nerdctl tag openwhisk/action-python-v3.9 172.17.23.1:30000/openwhisk/action-python-v3.9:1.20.0
 
-openwhisk/python2action
+openwhisk/python2action sudo nerdctl tag openwhisk/python2action 172.17.23.1:30000/openwhisk/python2action:1.20.0
 
-openwhisk/java8action
+openwhisk/java8action sudo nerdctl tag openwhisk/java8action 172.17.23.1:30000/openwhisk/java8action:1.20.0
 
-openwhisk/action-dotnet-v3.1
+openwhisk/action-dotnet-v3.1 sudo nerdctl tag openwhisk/action-dotnet-v3.1 172.17.23.1:30000/openwhisk/action-dotnet-v3.1:1.20.0
 
-openwhisk/action-ruby-v2.5
+openwhisk/action-ruby-v2.5 sudo nerdctl tag openwhisk/action-ruby-v2.5 172.17.23.1:30000/openwhisk/action-ruby-v2.5:1.20.0
 
-openwhisk/action-swift-v4.2
-
-alibaba: custom
-openwhisk/action-ruby-v2.5:1.20.0 - java11
-openwhisk/action-swift-v4.2:1.20.0 - custom
-
-["nodejs4.4","nodejs6","nodejs8","nodejs10","nodejs12","python3","python2.7","java8","java11","php7.2","dotnetcore2.1","golang1.8","custom"]
-["action-nodejs-v8","action-nodejs-v10","action-nodejs-v12","action-nodejs-v14","action-nodejs-v16","action-python-v3.9","python2action",
-"java8action","action-ruby-v2.5","action-php-v7.4","action-dotnet-v3.1","action-golang-v1.18","action-swift-v4.2"]
+openwhisk/action-swift-v4.2 sudo nerdctl tag openwhisk/action-swift-v4.2 172.17.23.1:30000/openwhisk/action-swift-v4.2:1.20.0
 
 sudo docker run -d \
   -p 30000:5000 \
@@ -78,3 +70,13 @@ sudo nerdctl run -d \
   --name registry \
   -v /proj/containernetwork-PG0/registry:/var/lib/registry \
   registry:2
+
+172.17.23.1:30000/openwhisk/action-nodejs-v8:1.20.0
+
+alibaba: custom
+openwhisk/action-ruby-v2.5:1.20.0 - java11
+openwhisk/action-swift-v4.2:1.20.0 - custom
+
+["nodejs4.4","nodejs6","nodejs8","nodejs10","nodejs12","python3","python2.7","java8","java11","php7.2","dotnetcore2.1","golang1.8","custom"]
+["action-nodejs-v8","action-nodejs-v10","action-nodejs-v12","action-nodejs-v14","action-nodejs-v16","action-python-v3.9","python2action",
+"java8action","action-ruby-v2.5","action-php-v7.4","action-dotnet-v3.1","action-golang-v1.18","action-swift-v4.2"]
