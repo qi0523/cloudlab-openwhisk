@@ -32,7 +32,7 @@ popd
 ## modify containerd
 configure_docker_storage() {
     printf "%s: %s\n" "$(date +"%T.%N")" "Configuring containerd storage"
-    sudo mkdir /mydata/var/lib/containerd
+    sudo mkdir -p /mydata/var/lib/containerd
     sudo sed -i 's#root = "/var/lib/containerd"#root = "/mydata/var/lib/containerd"#g' /etc/containerd/config.toml
     sudo systemctl restart containerd || (echo "ERROR: containerd installation failed, exiting." && exit -1)
     printf "%s: %s\n" "$(date +"%T.%N")" "Configured containerd storage to use mountpoint"
