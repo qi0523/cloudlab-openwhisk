@@ -15,9 +15,9 @@ mkdir bin src pkg
 GOROOT="/usr/local/go"
 GOPATH="$HOME/go"
 GOBIN="$GOPATH/bin"
-echo "export GOROOT=$GOROOT" >> .bashrc
-echo "export GOPATH=$GOPATH" >> .bashrc
-echo "export GOBIN=$GOBIN" >> .bashrc
-echo "export PATH=$GOPATH/bin:$GOBIN:$GOROOT/bin:$PATH" >> .bashrc
+echo "export GOROOT=$GOROOT" >> $HOME/.bashrc
+echo "export GOPATH=$GOPATH" >> $HOME/.bashrc
+echo "export GOBIN=$GOBIN" >> $HOME/.bashrc
+echo "export PATH=$GOPATH/bin:$GOBIN:$GOROOT/bin:$PATH" >> $HOME/.bashrc
 
-source .bashrc
+source $HOME/.bashrc

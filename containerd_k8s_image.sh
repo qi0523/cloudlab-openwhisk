@@ -36,21 +36,22 @@ mkdir -p $INSTALL_DIR
 pushd $INSTALL_DIR
 
 ##### install containerd-1.5.11
-wget https://github.com/qi0523/containerd/releases/download/v1.0.2/containerd-1.0.2-linux-amd64.tar.gz
+wget https://github.com/qi0523/containerd/releases/download/v1.6.9/containerd-1.6.9-linux-amd64.tar.gz
 wget https://github.com/opencontainers/runc/releases/download/v1.1.4/runc.amd64
 wget https://github.com/containernetworking/plugins/releases/download/v1.1.1/cni-plugins-linux-amd64-v1.1.1.tgz
 wget https://raw.githubusercontent.com/containerd/containerd/main/containerd.service
-wget https://github.com/qi0523/nerdctl/releases/download/v0.23.2/nerdctl-0.23.2-linux-amd64.tar.gz
+wget https://github.com/qi0523/nerdctl/releases/download/v0.23.3/nerdctl-0.23.3-linux-amd64.tar.gz
 
-sudo tar Cxzvf /usr/local containerd-1.0.2-linux-amd64.tar.gz
+sudo tar Cxzvf /usr/local containerd-1.6.9-linux-amd64.tar.gz
 sudo mkdir -p /usr/local/lib/systemd/system
 cat containerd.service | sudo tee /usr/local/lib/systemd/system/containerd.service
 
 sudo systemctl daemon-reload
 sudo systemctl enable --now containerd
 
-#runc /sys/fs/cgroup/memory/memory.memsw
 sudo install -m 755 runc.amd64 /usr/local/sbin/runc
+
+#runc /sys/fs/cgroup/memory/memory.memsw
 sudo sed -i 's/GRUB_CMDLINE_LINUX=".*"/GRUB_CMDLINE_LINUX="cgroup_enable=memory swapaccount=1"/' /etc/default/grub
 sudo update-grub
 
@@ -59,7 +60,7 @@ sudo mkdir -p /opt/cni/bin
 sudo tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-v1.1.1.tgz
 
 #nerdctl
-sudo tar -xvzf nerdctl-0.23.2-linux-amd64.tar.gz -C /usr/bin nerdctl
+sudo tar -xvzf nerdctl-0.23.3-linux-amd64.tar.gz -C /usr/bin nerdctl
 sudo mkdir -p /var/lib/nerdctl
 
 ############################ containerd config.toml
@@ -89,8 +90,8 @@ imageGCHighThresholdPercent: 100
 EOF
 
 ##### install distribution
-wget https://github.com/qi0523/distribution-agent/releases/download/v1.1.0/distribution-agent-1.1.0.tar.gz
-sudo tar Cxzvf /usr/local/bin distribution-agent-1.1.0.tar.gz
+wget https://github.com/qi0523/distribution-agent/releases/download/v1.1.1/distribution-agent-1.1.1.tar.gz
+sudo tar Cxzvf /usr/local/bin distribution-agent-1.1.1.tar.gz
 
 ##### install 
 git clone https://github.com/magnific0/wondershaper.git

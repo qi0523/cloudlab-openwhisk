@@ -1,10 +1,14 @@
+""" Ubuntu 20.04 Optional Kubernetes Cluster w/ OpenWhisk optionally deployed with a parameterized
+number of nodes.
+"""
+
 # Import the Portal object.
 import geni.portal as portal
 # Import the ProtoGENI library.
 import geni.rspec.pg as rspec
 
-IMAGE1 = 'urn:publicid:IDN+clemson.cloudlab.us+image+containernetwork-PG0:owv1'
-IMAGE2 = 'urn:publicid:IDN+clemson.cloudlab.us+image+containernetwork-PG0:registry'
+IMAGE1 = 'urn:publicid:IDN+cloudlab.umass.edu+image+containernetwork-PG0:mass-openwhisk'
+IMAGE2 = 'urn:publicid:IDN+cloudlab.umass.edu+image+containernetwork-PG0:mass-registry'
 
 pc = portal.Context()
 
