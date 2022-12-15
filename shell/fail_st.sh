@@ -10,45 +10,6 @@ INSTALL_DIR=/home/cloudlab-openwhisk
 HOST_ETH0_IP=$(ifconfig eth0 | awk 'NR==2{print $2}')
 HOST_NAME=$(hostname | awk 'BEGIN{FS="."} {print $1}')
 
-# change hostname
-sudo hostnamectl set-hostname $HOST_NAME
-sudo sed -i "4a 127.0.0.1 $HOST_NAME" /etc/hosts
-
-#role: control-plane
-
-## modify containerd, TODO:
-sudo apt install -y apparmor apparmor-utils
-
-## cni plugins TODO:
-pushd $INSTALL_DIR/install
-wget https://github.com/containernetworking/plugins/releases/download/v1.1.1/cni-plugins-linux-amd64-v1.1.1.tgz
-sudo tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-v1.1.1.tgz
-popd
-
-# sudo sed -i 's/GRUB_CMDLINE_LINUX="/GRUB_CMDLINE_LINUX="cgroup_enable=memory swapaccount=1,/' /etc/default/grub
-# sudo update-grub
-
-## modify containerd
-configure_docker_storage() {
-    printf "%s: %s\n" "$(date +"%T.%N")" "Configuring containerd storage"
-    sudo mkdir -p /mydata/var/lib/containerd
-    sudo sed -i 's#root = "/var/lib/containerd"#root = "/mydata/var/lib/containerd"#g' /etc/containerd/config.toml
-    sudo systemctl restart containerd || (echo "ERROR: containerd installation failed, exiting." && exit -1)
-    printf "%s: %s\n" "$(date +"%T.%N")" "Configured containerd storage to use mountpoint"
-}
-
-## memory.memsw
-disable_swap() {
-    # Turn swap off and comment out swap line in /etc/fstab
-    sudo swapoff -a
-    if [ $? -eq 0 ]; then   
-        printf "%s: %s\n" "$(date +"%T.%N")" "Turned off swap"
-    else
-        echo "***Error: Failed to turn off swap, which is necessary for Kubernetes"
-        exit -1
-    fi
-    sudo sed -i 's/UUID=.*swap/# &/' /etc/fstab
-}
 
 #invoker ip array
 invoker_ips=()
@@ -307,18 +268,6 @@ do
 done
 printf ")\n"
 
-# Kubernetes does not support swap, so we must disable it
-disable_swap
-
-# Use mountpoint (if it exists) to set up additional docker image storage
-if test -d "/mydata"; then
-    configure_docker_storage
-fi
-
-# Use second argument (node IP) to replace filler in kubeadm configuration
-sudo sed -i "s/REPLACE_ME_WITH_IP/$HOST_ETH0_IP/g" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
-
-#coproc nc { nc -l $HOST_ETH0_IP $MASTER_PORT; }
 
 python server.py $1 $HOST_ETH0_IP &
 
